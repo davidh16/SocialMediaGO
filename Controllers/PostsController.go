@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-type passedData struct {
+type PostInput struct {
 	Description string `json:"description"`
 	Image       string `json:"image"`
 }
 
 func Post(c *gin.Context) {
 
-	var body passedData
+	body := PostInput{}
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read passed data",

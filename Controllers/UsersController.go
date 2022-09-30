@@ -11,14 +11,21 @@ import (
 	"time"
 )
 
+type RegistrationInput struct {
+	Name     string `json:"name" binding:"required"`
+	Surname  string `json:"surname" binding:"required"`
+	Email    string `json:"email" binding:"email"`
+	Password string `json:"password" binding:"min=8"`
+}
+
+type LoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 func Register(c *gin.Context) {
 
-	var passedData struct {
-		Name     string
-		Surname  string
-		Email    string
-		Password string
-	}
+	passedData := RegistrationInput{}
 	if c.Bind(&passedData) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read passed data",
@@ -42,10 +49,7 @@ func Register(c *gin.Context) {
 } //treba implementirati validator
 
 func Login(c *gin.Context) {
-	var loginData struct {
-		Email    string
-		Password string
-	}
+	loginData := LoginInput{}
 
 	if c.Bind(&loginData) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
