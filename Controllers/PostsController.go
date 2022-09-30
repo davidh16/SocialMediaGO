@@ -51,22 +51,22 @@ func Post(c *gin.Context) {
 		"post": newPost,
 	})
 	return
-}
+} //treba implementirati validator, treba omogućiti uploadanje slike
 
 func DeletePost(c *gin.Context) {
 	deletedPost := Models.Post{}
-	err := initializers.DB.First(&deletedPost, c.Param("post_id"))
-	currentUserId := c.GetInt("id")
-	if err != nil {
-		if errors.As(err.Error, &logger.ErrRecordNotFound) {
+	result := initializers.DB.First(&deletedPost, c.Param("post_id"))
+	if result.Error != nil {
+		if errors.As(result.Error, &logger.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Post not found",
 			})
 			return
-		} else if deletedPost.UserId != currentUserId {
+		} else if deletedPost.UserId != c.GetInt("id") {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "You can not delete posts that are not yours",
 			})
+			return
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Post already deleted",
@@ -74,18 +74,26 @@ func DeletePost(c *gin.Context) {
 			return
 		}
 	}
+
 	now := time.Now()
-	initializers.DB.Model(&deletedPost).Updates(Models.Post{
+
+	result2 := initializers.DB.Model(&deletedPost).Updates(Models.Post{
 		Deleted:   true,
 		DeletedAt: &now,
 	})
+	if result2.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result2.Error,
+		})
+		return
+	}
 }
 
 func GetPost(c *gin.Context) {
 	wantedPost := Models.Post{}
-	err := initializers.DB.First(&wantedPost, c.Param("post_id"))
-	if err != nil {
-		if errors.As(err.Error, &logger.ErrRecordNotFound) {
+	result := initializers.DB.First(&wantedPost, c.Param("post_id"))
+	if result.Error != nil {
+		if errors.As(result.Error, &logger.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Post not found",
 			})
@@ -107,17 +115,50 @@ func GetPost(c *gin.Context) {
 }
 
 func GetMyPostsList(c *gin.Context) {
-	currentUserId := c.GetInt("id")
 	posts := []Models.Post{}
-	initializers.DB.Where("user_id=?", currentUserId).Preload("User").Find(&posts)
+
+	result := initializers.DB.Where("user_id=?", c.GetInt("id")).Preload("User").Find(&posts)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error,
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"posts": posts,
 	})
 	return
-}
+} //potrebno je napraviti paginaciju
 
-//getMyFriendsPostsList
+func GetMyFriendsPostsList(c *gin.Context) {
+	friends := Models.User{}
 
-//likePost
-//unlikePost
-//getPostsLikes
+	result := initializers.DB.Where("id=?", c.GetInt("id")).Preload("Friends", "id=?", c.Param("friend_id")).First(&friends)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error,
+		})
+		return
+	} else if len(friends.Friends) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Friend not found",
+		})
+		return
+	}
+
+	posts := []Models.Post{}
+
+	result2 := initializers.DB.Where("user_id=?", c.Param("friend_id")).Preload("User", "id=?", c.Param("friend_id")).Find(&posts)
+	if result2.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result2.Error,
+		})
+		return
+	}
+
+	c.JSON(http.StatusBadRequest, gin.H{
+		"friend posts": posts,
+	})
+	return
+} // treba napraviti paginaciju

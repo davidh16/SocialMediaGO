@@ -34,5 +34,15 @@ func main() {
 
 	r.GET("/posts", middleware.RequireAuth, Controllers.GetMyPostsList)
 
+	r.POST("/add_friend/:friend_id", middleware.RequireAuth, Controllers.AddFriend)
+
+	r.DELETE("/delete_friend/:friend_id", middleware.RequireAuth, Controllers.DeleteFriend)
+
+	r.GET("/get_friend/:friend_id", middleware.RequireAuth, Controllers.GetFriend)
+
+	r.GET("get_friends", middleware.RequireAuth, Controllers.GetFriendsList)
+
+	r.GET("/posts/:friend_id", middleware.RequireAuth, Controllers.GetMyFriendsPostsList)
+
 	r.Run()
 }

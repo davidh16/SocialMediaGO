@@ -17,6 +17,7 @@ type User struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   *time.Time `gorm:"default:"`
+	Friends     []*User    `gorm:"many2many:friendships"`
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) (err error) {

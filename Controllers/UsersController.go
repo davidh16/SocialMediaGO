@@ -39,7 +39,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user": registeredUser,
 	})
-}
+} //treba implementirati validator
 
 func Login(c *gin.Context) {
 	var loginData struct {
@@ -88,7 +88,7 @@ func Login(c *gin.Context) {
 	c.SetCookie("Authorization", tokenString, 3600*8, "", "", false, true)
 	c.JSON(http.StatusOK, gin.H{})
 	return
-}
+} //treba implementirati validator
 
 func Logout(c *gin.Context) {
 	c.SetCookie("Authorization", "test", -1, "", "", false, true)
@@ -116,17 +116,30 @@ func UpdateProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user": updatedUser,
 	})
-}
+} //treba implementirati validator
 
 func Deactivate(c *gin.Context) {
 	userId, _ := c.Get("id")
 	deactivatedUser := Models.User{}
-	initializers.DB.First(&deactivatedUser, userId)
+	result := initializers.DB.First(&deactivatedUser, userId)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": result.Error,
+		})
+	}
+
 	now := time.Now()
-	initializers.DB.Model(&deactivatedUser).Updates(Models.User{
+
+	result2 := initializers.DB.Model(&deactivatedUser).Updates(Models.User{
 		Deactivated: true,
 		DeletedAt:   &now,
 	})
+	if result2.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": result2.Error,
+		})
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Your account has been deactivated",
 	})
