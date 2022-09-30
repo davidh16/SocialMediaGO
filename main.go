@@ -44,5 +44,11 @@ func main() {
 
 	r.GET("/posts/:friend_id", middleware.RequireAuth, Controllers.GetMyFriendsPostsList)
 
+	r.POST("/like/:post_id", middleware.RequireAuth, Controllers.LikePost)
+
+	r.DELETE("/unlike/:post_id", middleware.RequireAuth, Controllers.UnlikePost)
+
+	r.GET("likes/:post_id", middleware.RequireAuth, Controllers.GetPostsLikes)
+
 	r.Run()
 }
