@@ -10,19 +10,20 @@ import (
 	"time"
 )
 
-type PostInput struct {
-	Description string `json:"description"`
-	Image       string `json:"image"`
-}
-
 func Post(c *gin.Context) {
+	description := c.PostForm("description")
 
-	body := PostInput{}
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read passed data",
-		})
-		return
+	image, _ := c.FormFile("image")
+	//filename := filepath.Base(image.Filename)
+
+	if image != nil {
+		err := c.SaveUploadedFile(image, image.Filename)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Image upload failed",
+			})
+			return
+		}
 	}
 
 	currentUserId := c.GetInt("id")
@@ -34,8 +35,8 @@ func Post(c *gin.Context) {
 	}
 
 	newPost := Models.Post{
-		Description: body.Description,
-		Image:       body.Image,
+		Description: description,
+		Image:       image.Filename,
 		UserId:      currentUserId,
 	}
 
@@ -51,7 +52,7 @@ func Post(c *gin.Context) {
 		"post": newPost,
 	})
 	return
-} //treba implementirati validator, treba omogućiti uploadanje slike
+} // uploadanje slike nije dovršeno, potrebno sejvati u temp i kreirati unique ime
 
 func DeletePost(c *gin.Context) {
 	deletedPost := Models.Post{}
